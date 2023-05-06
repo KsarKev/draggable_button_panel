@@ -1,0 +1,32 @@
+name: draggable_button_panel
+description: A customizable draggable button panel widget for Flutter.
+version: 1.0.0
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+# Add any additional dependencies here:
+# dependency_name: ^version
+
+# The following section is specific to the package.
+# It describes the author, homepage, and repository of the package.
+# Replace <your name> and <your GitHub account> with your own information.
+
+author: Ksar Kev
+homepage: https://github.com/<your GitHub account>/draggable_button_panel
+repository:
+  type: git
+  url: https://github.com/<your GitHub account>/draggable_button_panel.git
+
+# The following lines are used to publish the package on pub.dev
+# and should not be modified.
+
+publish_to: "https://pub.dartlang.org"
