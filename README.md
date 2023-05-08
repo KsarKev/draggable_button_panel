@@ -19,7 +19,7 @@ In summary, the DraggableButtonPanel is a handy widget for displaying a draggabl
 
 ## Short Demo
 
-![](https://github.com/KsarKev/draggable_button_panel/)
+![](https://github.com/KsarKev/draggable_button_panel/blob/main/lib/assets/gifs/demo.gif?raw=true)
 
 ## Installation
 
