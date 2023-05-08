@@ -28,7 +28,7 @@ To use this package, add `draggable_button_panel` as a dependency in your `pubsp
 1. Open the "pubspec.yaml" file of your Flutter project.
 
 2. Add the following line under the "dependencies" section:
-   `draggable_button_panel: ^1.0.0-dev.1`
+   `draggable_button_panel: ^1.0.1-dev.1`
 
 3. In your terminal, run the following command:
    `flutter pub get`

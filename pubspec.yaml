@@ -1,22 +1,11 @@
 name: draggable_button_panel
 description:
-  The DraggableButtonPanel is a widget that displays a panel with a button that can be moved around the screen. 
-  When the button is clicked, it triggers an animation that brings up a side panel containing a list of options.
-  
-  The panel is initially closed and appears with a reduced opacity. 
-  When the button is clicked, the panel opens with a fade-in animation. The panel is displayed to the left or right of the button, depending on its initial position on the screen.
-  
-  The panel contains a list of options in the form of icons, which can be customized by the user. 
-  The icons are arranged horizontally in the panel. When an option is selected, a corresponding action can be triggered.
-  
-  The panel and button are customizable in terms of color, size and opacity. 
-  Properties such as options, buttonSize, panelColor, buttonColor and collapseOpacity allow you to customize the appearance and behavior of the DraggableButtonPanel.
-  
-  The DraggableButtonPanel is implemented using Flutter features such as StatefulWidget, AnimationController, AnimatedOpacity, Stack and Positioned, to manage the state of the panel, perform animations and properly arrange the elements on the screen.
-  
-  In summary, the DraggableButtonPanel is a handy widget for displaying a draggable button with a side panel of options in a Flutter application.
+  The DraggableButtonPanel is a widget displaying a button with a movable panel of options. 
+  When clicked, it animates the panel's appearance. 
+  Customizable in color, size, and opacity. 
+  Implements StatefulWidget, AnimationController, AnimatedOpacity, Stack, and Positioned. Ideal for Flutter apps.
 
-version: 1.0.0-dev.1
+version: 1.0.0-dev.2
 
 environment:
   sdk: ">=3.0.0-218.0.dev <4.0.0"
