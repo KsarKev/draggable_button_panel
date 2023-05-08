@@ -1,23 +1,20 @@
-library draggable_button_panel;
-
 import 'package:flutter/material.dart';
 
+//ignore: must_be_immutable
 class DraggableButtonPanel extends StatefulWidget {
   DraggableButtonPanel({
-    required this.children,
+    required this.options,
     super.key,
     this.top = 50,
     this.left = 10,
     this.buttonSize = 55,
-    this.startingPanelWidth = 200,
     this.panelColor = Colors.white,
     this.buttonColor = Colors.blue,
     this.collapseOpacity = 0.8,
   });
 
-  final List<IconButton> children;
+  final List<IconButton> options;
   final double buttonSize;
-  final double startingPanelWidth;
   final Color panelColor;
   final Color buttonColor;
   final double collapseOpacity;
@@ -51,7 +48,16 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
   @override
   void initState() {
     super.initState();
-    _panelWidth = widget.startingPanelWidth;
+
+    double childrenWidth = widget.options.fold(
+      0.0,
+          (double previousValue, IconButton iconButton) =>
+      previousValue +
+          (iconButton.iconSize != null ? iconButton.iconSize! : 50.0),
+    );
+
+    _panelWidth = childrenWidth + widget.buttonSize + 30;
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -138,89 +144,107 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
     ),
     width: 56.0,
     height: 56.0,
-    child: const Icon(
+    child: widget.options.length > 1
+        ? const Icon(
       Icons.menu_open_rounded,
       color: Colors.white,
-    ),
+    )
+        : widget.options.first.icon,
   );
 
-  Widget _buildMainPanel(BuildContext context) => AnimatedBuilder(
-    animation: _animation,
-    builder: (context, child) => Stack(
-      children: [
-        Positioned(
-          top: widget.top,
-          left: _isLeftPositioned
-              ? 0
-              : (MediaQuery.of(context).size.width -
-              _panelWidth * _animation.value),
-          child: Container(
-            height: widget.buttonSize,
-            width: _panelWidth * _animation.value,
-            decoration: BoxDecoration(
-              color: widget.panelColor,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  blurRadius: 4,
+  Widget _buildMainPanel(BuildContext context) {
+    if (widget.options.length == 1) {
+      setState(() {
+        IconButton firstButton = widget.options.first;
+        widget.options.first = IconButton(
+          icon: firstButton.icon,
+          onPressed: firstButton.onPressed,
+          color: Colors.white,
+        );
+      });
+    }
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) => Stack(
+        children: [
+          if (widget.options.length > 1)
+            Positioned(
+              top: widget.top,
+              left: _isLeftPositioned
+                  ? 0
+                  : (MediaQuery.of(context).size.width -
+                  _panelWidth * _animation.value),
+              child: Container(
+                height: widget.buttonSize,
+                width: _panelWidth * _animation.value,
+                decoration: BoxDecoration(
+                  color: widget.panelColor,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      blurRadius: 4,
+                    )
+                  ],
+                ),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  reverse: _isLeftPositioned,
+                  itemCount: widget.options.length,
+                  itemBuilder: (BuildContext context, int index) => Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: widget.options[index],
+                  ),
+                ),
+              ),
+            ),
+          Positioned(
+            top: widget.top,
+            left: _isLeftPositioned
+                ? 0
+                : MediaQuery.of(context).size.width - widget.buttonSize,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: _isLeftPositioned
+                    ? const BorderRadius.only(
+                  topRight: Radius.circular(10),
+                  bottomRight: Radius.circular(10),
                 )
-              ],
-            ),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              reverse: _isLeftPositioned,
-              itemCount: widget.children.length,
-              itemBuilder: (BuildContext context, int index) => Padding(
-                padding: const EdgeInsets.all(8),
-                child: widget.children[index],
+                    : const BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  bottomLeft: Radius.circular(10),
+                ),
+                color: widget.buttonColor,
               ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: widget.top,
-          left: _isLeftPositioned
-              ? 0
-              : MediaQuery.of(context).size.width - widget.buttonSize,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: _isLeftPositioned
-                  ? const BorderRadius.only(
-                topRight: Radius.circular(10),
-                bottomRight: Radius.circular(10),
-              )
-                  : const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                bottomLeft: Radius.circular(10),
-              ),
-              color: widget.buttonColor,
-            ),
-            width: widget.buttonSize,
-            height: widget.buttonSize,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 850),
-              child: _isOpen
-                  ? RotatedBox(
-                quarterTurns: _isLeftPositioned ? 0 : 2,
-                child: IconButton(
-                  icon: const Icon(Icons.menu_open_rounded),
-                  color: Colors.white,
-                  onPressed: _triggerAnimation,
+              width: widget.buttonSize,
+              height: widget.buttonSize,
+              child: widget.options.length > 1
+                  ? AnimatedSwitcher(
+                duration: const Duration(milliseconds: 850),
+                child: _isOpen
+                    ? RotatedBox(
+                  quarterTurns: _isLeftPositioned ? 0 : 2,
+                  child: IconButton(
+                    icon: const Icon(Icons.menu_open_rounded),
+                    color: Colors.white,
+                    onPressed: _triggerAnimation,
+                  ),
+                )
+                    : RotatedBox(
+                  quarterTurns: _isLeftPositioned ? 2 : 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.menu_open_rounded),
+                    color: Colors.white,
+                    onPressed: _triggerAnimation,
+                  ),
                 ),
               )
-                  : RotatedBox(
-                quarterTurns: _isLeftPositioned ? 2 : 0,
-                child: IconButton(
-                  icon: const Icon(Icons.menu_open_rounded),
-                  color: Colors.white,
-                  onPressed: _triggerAnimation,
-                ),
-              ),
+                  : widget.options.first,
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

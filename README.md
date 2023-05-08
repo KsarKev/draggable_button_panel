@@ -9,7 +9,7 @@ Pour utiliser ce package, ajoutez `draggable_button_panel` comme dépendance dan
 1. Ouvrez le fichier "pubspec.yaml" de votre projet Flutter.
 
 2. Ajoutez la ligne suivante sous la section "dependencies" :
-`draggable_button_panel: ^1.0.0`
+`draggable_button_panel: ^1.0.0-dev.1`
 
 3. Dans votre terminal, exécutez la commande suivante :
 `flutter pub get`
@@ -50,15 +50,13 @@ DraggableButtonPanel(
 ```
 
 ## Options de personnalisation
- - **children**: La liste des boutons à afficher dans le panneau.
+ - **options**: La liste des boutons à afficher dans le panneau.
  - **buttonSize**: La taille des boutons dans le panneau (par défaut : 55).
- - **startingPanelWidth**: La largeur initiale du panneau lorsqu'il est ouvert (par défaut : 200).
  - **panelColor**: La couleur de fond du panneau (par défaut : Colors.white).
  - **buttonColor**: La couleur du bouton principal qui ouvre et ferme le panneau (par défaut : Colors.blue).
  - **collapseOpacity**: L'opacité du panneau lorsqu'il est fermé (par défaut : 0.8).
  - **top**: La position top du panneau (par défaut : 50).
  - **left**: La position left du panneau (par défaut : 10).
- - 
 
 ## Licence
 Ce package est distribué sous la licence BSD 3-Clause :

@@ -10,11 +10,10 @@ void main() {
           top: 50,
           left: 10,
           buttonSize: 55,
-          startingPanelWidth: 200,
           panelColor: Colors.white,
           buttonColor: Colors.blue,
           collapseOpacity: 0.8,
-          children: [
+          options: [
             IconButton(
               icon: const Icon(Icons.ac_unit),
               onPressed: () {},
