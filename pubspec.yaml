@@ -5,7 +5,7 @@ description:
   Customizable in color, size, and opacity. 
   Implements StatefulWidget, AnimationController, AnimatedOpacity, Stack, and Positioned. Ideal for Flutter apps.
 
-version: 1.0.0-dev.2
+version: 1.0.0-dev.3
 
 environment:
   sdk: ">=3.0.0-218.0.dev <4.0.0"
@@ -27,3 +27,6 @@ dev_dependencies:
 
 homepage: https://github.com/KsarKev/draggable_button_panel
 repository: https://github.com/KsarKev/draggable_button_panel.git
+
+flutter:
+  uses-material-design: true

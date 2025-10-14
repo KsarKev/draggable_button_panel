@@ -4,6 +4,27 @@ All significant changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-dev.3] - 2025-10-14
+
+### Added
+- PanelButton with per-row expansion animations; OptionButtons slide out from behind the row.
+- Toggleable mode for rows without options, with single or multiple selection.
+- Emission of toggle changes via onTogglesChanged with indices and optional ids (ToggleEntry).
+- Dock-aware border radii on parent container and precise rounding for first/last main buttons and far-end option.
+- Drag feedback mirrors the current visual state (colors, options, orientation, expansion).
+
+### Changed
+- Fixed layout overflows and prevented panel width shifts when rows expand.
+- Refactored and documented public API for package readiness.
+
+### Deprecated
+- None.
+
+### Fixed
+- RenderFlex overflow in certain collapsed states.
+
+---
+
 ## [1.0.0-dev.2] - 08-05-2023
 
 ### Added

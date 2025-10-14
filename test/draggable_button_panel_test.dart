@@ -7,21 +7,23 @@ void main() {
   testWidgets('DraggableButtonPanel changes position when dragged',
           (WidgetTester tester) async {
         final widget = DraggableButtonPanel(
-          top: 50,
-          left: 10,
-          buttonSize: 55,
-          panelColor: Colors.white,
-          buttonColor: Colors.blue,
-          collapseOpacity: 0.8,
-          options: [
-            IconButton(
-              icon: const Icon(Icons.ac_unit),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.beach_access),
-              onPressed: () {},
-            ),
+          children: [
+            PanelButton(
+              icon: Icon(
+                Icons.menu_open_rounded,
+                color: Colors.white,
+              ),
+              options: [
+                OptionButton(
+                  icon: Icon(Icons.checklist),
+                  onPressed: () => {},
+                ),
+                OptionButton(
+                  icon: Icon(Icons.add),
+                  onPressed: () {},
+                ),
+              ],
+            )
           ],
         );
 
