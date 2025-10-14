@@ -56,7 +56,7 @@ class _DebugHomePageState extends State<DebugHomePage> {
             bottom: 24,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.25),
+                color: Colors.black.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Padding(
@@ -168,7 +168,7 @@ class _DebugHomePageState extends State<DebugHomePage> {
             );
           });
         },
-        icon: const Icon(Icons.vertical_align_bottom),
+        icon: const Icon(Icons.refresh_rounded),
         label: const Text('Reset Panel Position'),
       ),
     );

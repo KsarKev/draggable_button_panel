@@ -307,7 +307,6 @@ class PanelButtonWidget extends StatelessWidget {
   }
 }
 
-//ignore: must_be_immutable
 /// A draggable, dockable vertical panel of [PanelButton] rows.
 ///
 /// Features:
@@ -362,12 +361,13 @@ class DraggableButtonPanel extends StatefulWidget {
   /// useful for persisting and restoring the panel position from the parent.
   final ValueChanged<Offset>? onPositionChanged;
 
-  /// Current top offset of the panel (mutable to persist position).
-  double top;
+  /// Initial top offset of the panel. The mutable source of truth is kept
+  /// internally by the State; this value is only read once in initState.
+  final double top;
 
   /// Deprecated: left offset is ignored for layout; docking determines x-position.
   @Deprecated('Ignored for layout. Use top + dockLeft (via setPanelPosition) instead.')
-  double left;
+  final double left;
 
   @override
   State<DraggableButtonPanel> createState() => DraggableButtonPanelState();
