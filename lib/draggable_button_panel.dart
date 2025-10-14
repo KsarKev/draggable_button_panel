@@ -12,15 +12,16 @@
 ///
 ///   DraggableButtonPanel(
 ///     toggleMode: ToggleSelectionMode.multiple,
-///     onTogglesChanged: (indices) => debugPrint('$indices'),
-///     children: [
+///     onTogglesChanged: (entries) => debugPrint(entries.toString()),
+///     children: const [
 ///       PanelButton(
 ///         options: [
 ///           OptionButton(icon: Icon(Icons.check)),
 ///           OptionButton(icon: Icon(Icons.add)),
 ///         ],
 ///       ),
-///       PanelButton(toggleable: true),
+///       // Toggleable row without options
+///       PanelButton(toggleable: true, initiallyToggled: false),
 ///     ],
 ///   )
 import 'package:flutter/material.dart';
@@ -196,8 +197,8 @@ class PanelButtonWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: panelButton.backgroundColor ?? Colors.white,
                 ),
-                child: RotatedBox(
-                  quarterTurns: isLeftPositioned || isExpanded ? 2 : 0,
+                child: Transform.scale(
+                  scaleX: (isLeftPositioned || isExpanded) ? -1.0 : 1.0,
                   child: IconButton(
                     color: panelButton.color,
                     icon: panelButton.icon,
@@ -214,8 +215,8 @@ class PanelButtonWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 color: panelButton.backgroundColor ?? Colors.white,
               ),
-              child: RotatedBox(
-                quarterTurns: isLeftPositioned || isExpanded ? 2 : 0,
+              child: Transform.scale(
+                scaleX: (isLeftPositioned || isExpanded) ? -1.0 : 1.0,
                 child: IconButton(
                   color: panelButton.color,
                   icon: panelButton.icon,
@@ -330,6 +331,7 @@ class DraggableButtonPanel extends StatefulWidget {
     this.collapseOpacity = 0.5,
     this.toggleMode = ToggleSelectionMode.multiple,
     this.onTogglesChanged,
+    this.onPositionChanged,
   });
 
   /// List of main buttons (rows) displayed by this panel.
@@ -354,10 +356,17 @@ class DraggableButtonPanel extends StatefulWidget {
   /// Only relevant for rows with [PanelButton.toggleable] == true.
   final ValueChanged<List<ToggleEntry>>? onTogglesChanged;
 
+  /// Emits the current panel offset as an [Offset] (dx = left, dy = top)
+  /// whenever the panel position changes due to dragging or when changed
+  /// programmatically via [DraggableButtonPanelState.setPanelPosition]. This is
+  /// useful for persisting and restoring the panel position from the parent.
+  final ValueChanged<Offset>? onPositionChanged;
+
   /// Current top offset of the panel (mutable to persist position).
   double top;
 
-  /// Current left offset of the panel (mutable to persist position).
+  /// Deprecated: left offset is ignored for layout; docking determines x-position.
+  @Deprecated('Ignored for layout. Use top + dockLeft (via setPanelPosition) instead.')
   double left;
 
   @override
@@ -366,9 +375,11 @@ class DraggableButtonPanel extends StatefulWidget {
 
 class DraggableButtonPanelState extends State<DraggableButtonPanel>
     with SingleTickerProviderStateMixin {
-  bool _isLeftPositioned = false;
+  bool _isDockedLeft = false;
   int? _expandedIndex;
   final Set<int> _toggledIndices = <int>{};
+  // Internal source of truth for vertical position to avoid being clobbered by parent rebuilds.
+  double _top = 0;
 
   void _notifyToggles() {
     final callback = widget.onTogglesChanged;
@@ -386,18 +397,73 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
   }
 
   void _updatePosition(Offset newPosition) {
-    if (newPosition != Offset(widget.left, widget.top)) {
+    // Keep internal vertical position; horizontal (left) is derived from docking.
+    if (newPosition.dy != _top) {
       setState(() {
-        widget
-          ..left = newPosition.dx
-          ..top = newPosition.dy;
+        _top = newPosition.dy;
       });
     }
+  }
+
+  /// Current offset of the panel (dx = visual left, dy = top).
+  ///
+  /// Note: `left` is computed from the docking side and current target width
+  /// (0 when docked left, screenWidth - targetWidth when docked right).
+  Offset get panelOffset {
+    final ctx = context;
+    final size = MediaQuery.of(ctx).size;
+    final double targetWidth = widget.width + _maxExpandedExtraWidth();
+    final double computedLeft = _isDockedLeft ? 0 : (size.width - targetWidth);
+    return Offset(computedLeft, _top);
+  }
+
+  /// Whether the panel is currently docked to the left side.
+  bool get isDockedLeft => _isDockedLeft;
+
+  /// Programmatically set the panel position and/or dock side.
+  ///
+  /// - Provide [top] to move the panel.
+  /// - Provide [dockLeft] to force docking to the left or right.
+  /// - When [clampToScreen] is true, the top value will be clamped to
+  ///   the safe available height to keep the panel visible.
+  void setPanelPosition({
+    double? top,
+    bool? dockLeft,
+    bool clampToScreen = true,
+  }) {
+    setState(() {
+      if (dockLeft != null) {
+        _isDockedLeft = dockLeft;
+      }
+      if (top != null) {
+        if (clampToScreen) {
+          final size = MediaQuery.of(context).size;
+          final padding = MediaQuery.of(context).padding;
+          // Height available to the body area (no AppBar subtraction here, since
+          // this widget is typically placed inside the Scaffold body already).
+          final bodyHeight = size.height - padding.top - padding.bottom;
+          // Clamp using the full panel height so the panel stays fully visible.
+          final panelHeight = (widget.children.length * widget.width);
+          final minTop = 0.0;
+          final maxTop = (bodyHeight - panelHeight).clamp(0.0, double.infinity);
+          _top = top.clamp(minTop, maxTop);
+        } else {
+          _top = top;
+        }
+      }
+      // left is intentionally ignored; docking defines x-position.
+    });
+    final size = MediaQuery.of(context).size;
+    final double targetWidth = widget.width + _maxExpandedExtraWidth();
+    final double computedLeft = _isDockedLeft ? 0 : (size.width - targetWidth);
+    widget.onPositionChanged?.call(Offset(computedLeft, _top));
   }
 
   @override
   void initState() {
     super.initState();
+    // Initialize internal top from the initial widget value once.
+    _top = widget.top;
     for (int i = 0; i < widget.children.length; i++) {
       final child = widget.children[i];
       if ((child.options.isEmpty) &&
@@ -425,6 +491,7 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
 
   @override
   Widget build(BuildContext context) => Draggable<int>(
+        // Allow free drag so user can cross the screen to change dock side.
         onDragEnd: _onDragEnd,
         dragAnchorStrategy: pointerDragAnchorStrategy,
         feedback: _buildFeedback(),
@@ -446,23 +513,29 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
 
     final newPosition = Offset(
       draggableDetails.offset.dx,
-      draggableDetails.offset.dy - widget.width,
+      draggableDetails.offset.dy,
     );
     _updatePosition(newPosition);
 
     setState(() {
-      final finalPosition = draggableDetails.offset.dy - widget.width;
+      final finalPosition = draggableDetails.offset.dy;
 
-      _isLeftPositioned = draggableDetails.offset.dx < availableWidth / 2;
+      _isDockedLeft = draggableDetails.offset.dx < availableWidth / 2;
 
-      if (finalPosition < 50) {
-        widget.top = 50;
-      } else if (finalPosition + widget.width > availableHeight) {
-        widget.top = availableHeight - widget.width - 50;
+      final panelHeight = (widget.children.length * widget.width);
+      if (finalPosition < 0) {
+        _top = 0;
+      } else if (finalPosition + panelHeight > availableHeight) {
+        _top = (availableHeight - panelHeight).clamp(0.0, double.infinity);
       } else {
-        widget.top = finalPosition;
+        _top = finalPosition;
       }
     });
+
+    // Notify external listeners of the final position (left, top)
+    final double targetWidth = widget.width + _maxExpandedExtraWidth();
+    final double computedLeft = _isDockedLeft ? 0 : (size.width - targetWidth);
+    widget.onPositionChanged?.call(Offset(computedLeft, _top));
   }
 
   Widget _buildFeedback() {
@@ -484,13 +557,13 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
                 SizedBox(
                   height: widget.width,
                   child: Align(
-                    alignment: _isLeftPositioned
+                    alignment: _isDockedLeft
                         ? Alignment.centerLeft
                         : Alignment.centerRight,
                     child: PanelButtonWidget(
                       panelButton: widget.children[i],
                       isExpanded: _expandedIndex == i,
-                      isLeftPositioned: _isLeftPositioned,
+                      isLeftPositioned: _isDockedLeft,
                       baseButtonSize: widget.width,
                       onExpand: () {},
                       isFirst: i == 0,
@@ -525,13 +598,15 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
     return maxExtra;
   }
 
+  double _targetWidth() => widget.width + _maxExpandedExtraWidth();
+
   Widget _buildPanel(BuildContext context) {
-    final double targetWidth = widget.width + _maxExpandedExtraWidth();
+    final double targetWidth = _targetWidth();
 
     return Stack(children: [
       Positioned(
-        top: widget.top,
-        left: _isLeftPositioned
+        top: _top,
+        left: _isDockedLeft
             ? 0
             : (MediaQuery.of(context).size.width - targetWidth),
         child: Container(
@@ -547,13 +622,13 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
                 SizedBox(
                   height: widget.width,
                   child: Align(
-                    alignment: _isLeftPositioned
+                    alignment: _isDockedLeft
                         ? Alignment.centerLeft
                         : Alignment.centerRight,
                     child: PanelButtonWidget(
                       panelButton: widget.children[i],
                       isExpanded: _expandedIndex == i,
-                      isLeftPositioned: _isLeftPositioned,
+                      isLeftPositioned: _isDockedLeft,
                       baseButtonSize: widget.width,
                       onExpand: () {
                         setState(() {
