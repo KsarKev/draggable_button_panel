@@ -5,7 +5,7 @@ description:
   Customizable in color, size, and opacity. 
   Implements StatefulWidget, AnimationController, AnimatedOpacity, Stack, and Positioned. Ideal for Flutter apps.
 
-version: 1.0.0-dev.3
+version: 1.0.0-dev.4
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
