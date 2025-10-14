@@ -38,7 +38,9 @@ class _DebugHomePageState extends State<DebugHomePage> {
   // Optionally keep a key to read/adjust top/left from the state during tests
   final panelKey = GlobalKey<DraggableButtonPanelState>();
   Offset? savedOffset;
-  bool savedDockLeft = true; 
+  bool savedDockLeft = true;
+  String? lastPressedMessage = 'No button pressed yet';
+  String? toggledMessage = 'No toggles selected';
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +77,82 @@ class _DebugHomePageState extends State<DebugHomePage> {
 
           // Center placeholder content
           const Center(
-            child: Text(
-              'Test area',
-              style: TextStyle(color: Colors.white, fontSize: 18),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Test area',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                // Placeholder for message
+              ],
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).size.height / 2 + 30,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      lastPressedMessage ?? '',
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        toggledMessage ?? '',
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: Center(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final state = panelKey.currentState;
+                        if (state == null) return;
+                        setState(() {
+                          state.setPanelPosition(
+                            top: 50,
+                            dockLeft: false,
+                          );
+                        });
+                      },
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Reset Panel Position'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -90,13 +165,17 @@ class _DebugHomePageState extends State<DebugHomePage> {
             toggleMode: ToggleSelectionMode.multiple,
             onTogglesChanged: (entries) {
               // Print both indices and optional ids for easy debugging
-              debugPrint('Toggles changed: ' +
-                  entries.map((e) => '(${e.index}, id: ${e.id})').join(', '));
+              setState(() {
+                toggledMessage = entries.isEmpty
+                  ? 'No toggles selected'
+                  : 'Toggled: ' + entries.map((e) => '(${e.index}, id: ${e.id})').join(', ');
+              });
             },
             onPositionChanged: (offset) {
               // Optionally save the last position for testing
               savedOffset = offset;
-              savedDockLeft = panelKey.currentState?.isDockedLeft ?? savedDockLeft;
+              savedDockLeft =
+                  panelKey.currentState?.isDockedLeft ?? savedDockLeft;
             },
             children: [
               // Row 0: expandable with two options
@@ -104,11 +183,23 @@ class _DebugHomePageState extends State<DebugHomePage> {
                 id: PanelBtnId.menu,
                 icon: const Icon(Icons.menu_open_rounded, color: Colors.white),
                 backgroundColor: Colors.redAccent,
-                options: const [
-                  OptionButton(icon: Icon(Icons.checklist, color: Colors.white),
-                      backgroundColor: Colors.redAccent),
-                  OptionButton(icon: Icon(Icons.add, color: Colors.white),
-                      backgroundColor: Colors.redAccent),
+                options: [
+                  OptionButton(
+                      icon: Icon(Icons.checklist, color: Colors.white),
+                      backgroundColor: Colors.redAccent,
+                      onPressed: () {
+                        setState(() {
+                          lastPressedMessage = 'Checklist pressed';
+                        });
+                      }),
+                  OptionButton(
+                      icon: Icon(Icons.add, color: Colors.white),
+                      backgroundColor: Colors.redAccent,
+                      onPressed: () {
+                        setState(() {
+                          lastPressedMessage = 'Add pressed';
+                        });
+                      }),
                 ],
               ),
 
@@ -121,17 +212,30 @@ class _DebugHomePageState extends State<DebugHomePage> {
                   OptionButton(
                       icon: Icon(Icons.favorite_border, color: Colors.white),
                       backgroundColor: Colors.pinkAccent,
-                      width: 44,
+                      width: 50,
                       onPressed: () {
-                        print('Heart pressed');
+                        setState(() {
+                          lastPressedMessage = 'Heart pressed';
+                        });
                       }),
-                  OptionButton(icon: Icon(Icons.share, color: Colors.white),
+                  OptionButton(
+                      icon: Icon(Icons.share, color: Colors.white),
                       backgroundColor: Colors.pinkAccent,
-                      width: 50),
+                      width: 50,
+                      onPressed: () {
+                        setState(() {
+                          lastPressedMessage = 'Share pressed';
+                        });
+                      }),
                   OptionButton(
                       icon: Icon(Icons.delete_outline, color: Colors.white),
                       backgroundColor: Colors.pinkAccent,
-                      width: 56),
+                      width: 50,
+                      onPressed: () {
+                        setState(() {
+                          lastPressedMessage = 'Delete pressed';
+                        });
+                      }),
                 ],
               ),
 
@@ -156,20 +260,6 @@ class _DebugHomePageState extends State<DebugHomePage> {
             ],
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final state = panelKey.currentState;
-          if (state == null) return;
-          setState(() {
-            state.setPanelPosition(
-              top: 50,
-              dockLeft: false,
-            );
-          });
-        },
-        icon: const Icon(Icons.refresh_rounded),
-        label: const Text('Reset Panel Position'),
       ),
     );
   }

@@ -480,8 +480,11 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
         ..clear()
         ..add(first.first);
     }
-    // Notify initial state
-    _notifyToggles();
+    // Notify initial state after first frame to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _notifyToggles();
+    });
   }
 
   @override
