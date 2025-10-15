@@ -96,8 +96,8 @@ class _DebugHomePageState extends State<DebugHomePage> {
               children: [
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(8),
@@ -120,7 +120,8 @@ class _DebugHomePageState extends State<DebugHomePage> {
                       ),
                       child: Text(
                         toggledMessage ?? '',
-                        style: const TextStyle(color: Colors.white, fontSize: 16),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
                   ),
@@ -144,7 +145,8 @@ class _DebugHomePageState extends State<DebugHomePage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -163,12 +165,21 @@ class _DebugHomePageState extends State<DebugHomePage> {
             buttonColor: Colors.blue,
             collapseOpacity: 0.5,
             toggleMode: ToggleSelectionMode.multiple,
+            onMenuExpand: (toggleEntry) {
+              setState(() {
+                lastPressedMessage =
+                    'Menu expanded for button index ${toggleEntry.index}, id: ${toggleEntry.id}';
+              });
+            },
             onTogglesChanged: (entries) {
               // Print both indices and optional ids for easy debugging
               setState(() {
                 toggledMessage = entries.isEmpty
-                  ? 'No toggles selected'
-                  : 'Toggled: ' + entries.map((e) => '(${e.index}, id: ${e.id})').join(', ');
+                    ? 'No toggles selected'
+                    : 'Toggled: ' +
+                        entries
+                            .map((e) => '(${e.index}, id: ${e.id})')
+                            .join(', ');
               });
             },
             onPositionChanged: (offset) {
@@ -180,11 +191,13 @@ class _DebugHomePageState extends State<DebugHomePage> {
             children: [
               // Row 0: expandable with two options
               PanelButton(
+                tooltip: 'Menu',
                 id: PanelBtnId.menu,
                 icon: const Icon(Icons.menu_open_rounded, color: Colors.white),
                 backgroundColor: Colors.redAccent,
                 options: [
                   OptionButton(
+                      tooltip: 'Checklist',
                       icon: Icon(Icons.checklist, color: Colors.white),
                       backgroundColor: Colors.redAccent,
                       onPressed: () {
@@ -193,6 +206,7 @@ class _DebugHomePageState extends State<DebugHomePage> {
                         });
                       }),
                   OptionButton(
+                      tooltip: 'Add',
                       icon: Icon(Icons.add, color: Colors.white),
                       backgroundColor: Colors.redAccent,
                       onPressed: () {
@@ -205,11 +219,14 @@ class _DebugHomePageState extends State<DebugHomePage> {
 
               // Row 1: expandable with three options and custom widths
               PanelButton(
-                id: 42, // int id example
+                tooltip: 'Favorites',
+                id: 42,
+                // int id example
                 icon: const Icon(Icons.favorite, color: Colors.white),
                 backgroundColor: Colors.pinkAccent,
                 options: [
                   OptionButton(
+                      tooltip: 'Like',
                       icon: Icon(Icons.favorite_border, color: Colors.white),
                       backgroundColor: Colors.pinkAccent,
                       width: 50,
@@ -219,6 +236,7 @@ class _DebugHomePageState extends State<DebugHomePage> {
                         });
                       }),
                   OptionButton(
+                      tooltip: 'Share',
                       icon: Icon(Icons.share, color: Colors.white),
                       backgroundColor: Colors.pinkAccent,
                       width: 50,
@@ -228,6 +246,7 @@ class _DebugHomePageState extends State<DebugHomePage> {
                         });
                       }),
                   OptionButton(
+                      tooltip: 'Delete',
                       icon: Icon(Icons.delete_outline, color: Colors.white),
                       backgroundColor: Colors.pinkAccent,
                       width: 50,

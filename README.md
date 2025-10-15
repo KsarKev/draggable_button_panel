@@ -1,81 +1,83 @@
 # Draggable Button Panel
 
-Panneau vertical draggable et “dockable” (gauche/droite) composé de lignes de boutons.
-Chaque ligne (PanelButton) peut soit s’agrandir pour afficher des options horizontales,
-soit fonctionner en mode toggle (marche/arrêt) si elle n’a pas d’options.
+Vertical draggable and dockable panel (left/right) composed of rows of buttons.
+Each row (PanelButton) can either expand to display horizontal options,
+or function as a toggle (on/off) if it has no options.
 
-## Aperçu
+## Overview
 
 ![](https://github.com/KsarKev/draggable_button_panel/blob/main/lib/assets/gifs/demo.gif?raw=true)
 
-## Fonctionnalités clés
-- Drag vertical avec auto-dock sur le bord gauche ou droit de l’écran.
-- Animation par bouton: seule la ligne cliquée s’étend (les autres ne bougent pas).
-- Options (OptionButton) qui glissent depuis l’arrière du PanelButton.
-- Mode toggle pour les lignes sans options, avec sélection simple ou multiple.
-- Événement onTogglesChanged qui émet la liste des éléments actifs (index + id optionnel).
-- Bords arrondis contextuels: parent arrondi côté libre; seul le premier/dernier PanelButton a des coins arrondis; sur les options, uniquement l’élément le plus éloigné est arrondi verticalement.
-- Le feedback visuel pendant le drag reflète fidèlement l’état actuel (orientation, couleurs, expansions, toggles).
+## Key Features
+- Vertical drag with auto-dock to the left or right edge of the screen.
+- Per-button animation: only the clicked row expands (others remain unchanged).
+- Options (OptionButton) slide out from behind the PanelButton.
+- Toggle mode for rows without options, with single or multiple selection.
+- onTogglesChanged event emits the list of active items (index + optional id).
+- Contextual rounded corners: parent rounded on the free side; only the first/last PanelButton have rounded corners; for options, only the furthest element is vertically rounded.
+- Visual feedback during drag accurately reflects the current state (orientation, colors, expansions, toggles).
 
 ## Installation
 
-Ajoutez `draggable_button_panel` à votre `pubspec.yaml` puis faites un `flutter pub get`.
+Add `draggable_button_panel` to your `pubspec.yaml` then run `flutter pub get`.
 
 ```yaml
 dependencies:
   draggable_button_panel: ^1.0.0-dev.3
 ```
 
-Importez ensuite le package:
+Then import the package:
 
 ```dart
 import 'package:draggable_button_panel/draggable_button_panel.dart';
 ```
 
-## API rapide
+## Quick API
 
 ### ToggleSelectionMode
-- `single`: un seul bouton toggleable actif à la fois.
-- `multiple`: plusieurs peuvent être actifs.
+- `single`: only one toggleable button can be active at a time.
+- `multiple`: several can be active.
 
 ### OptionButton
-Représente une option qui se déplie horizontalement.
-- `icon` (Icon) requis
-- `label` (String?) optionnel (informel)
+Represents an option that unfolds horizontally.
+- `icon` (Icon) required
+- `label` (String?) optional (informal)
+- `tooltip` (String?) tooltip shown on hover (desktop/web) or long press (mobile)
 - `onPressed` (VoidCallback?)
 - `color`, `backgroundColor` (Color?)
-- `width` (double?) taille horizontale (par défaut 50)
+- `width` (double?) horizontal size (default 50)
 
 ### PanelButton
-Ligne principale du panneau; deux usages:
-- avec `options`: la ligne s’étend pour afficher les `OptionButton`.
-- sans `options` + `toggleable: true`: agit comme un bouton on/off.
+Main row of the panel; two uses:
+- with `options`: the row expands to show `OptionButton`s.
+- without `options` + `toggleable: true`: acts as an on/off button.
 
-Propriétés principales:
-- `icon`, `label`, `onPressed`, `color`, `backgroundColor`
-- `width`, `height` (par défaut 50)
+Main properties:
+- `icon`, `label`, `tooltip`, `onPressed`, `color`, `backgroundColor`
+- `width`, `height` (default 50)
 - `options` (List<OptionButton>)
-- `toggleable` (bool, défaut false)
-- `initiallyToggled` (bool, défaut false)
-- `id` (Object?) identifiant libre (int/String recommandé) utilisé dans les événements.
+- `toggleable` (bool, default false)
+- `initiallyToggled` (bool, default false)
+- `id` (Object?) free identifier (int/String recommended) used in events.
 
 ### DraggableButtonPanel
 - `children` (List<PanelButton>)
-- `width` (double) taille carrée d’une ligne (sert aussi de défaut pour les options)
-- `buttonColor` (Color) couleur par défaut des boutons
-- `collapseOpacity` (double) opacité des lignes inactives (0–1)
+- `width` (double) square size of a row (also used as default for options)
+- `buttonColor` (Color) default color for buttons
+- `collapseOpacity` (double) opacity of inactive rows (0–1)
 - `toggleMode` (ToggleSelectionMode)
-- `onTogglesChanged` (ValueChanged<List<ToggleEntry>>?) émet les états actifs
-- `onPositionChanged` (ValueChanged<Offset>?) notifie la position (left, top) après drag ou changement programmatique
-- `top` (double) position verticale du panneau (mutable pour persister la position)
-- `left` (double) [DEPRECATED] la position horizontale n’est plus utilisée pour le layout; le côté est déterminé par le docking (gauche/droite)
+- `onTogglesChanged` (ValueChanged<List<ToggleEntry>>?) emits active states
+- `onPositionChanged` (ValueChanged<Offset>?) notifies position (left, top) after drag or programmatic change
+- `onMenuExpand` (ValueChanged<ToggleEntry>?) called when a row with options expands (emits index + optional id)
+- `top` (double) vertical position of the panel (mutable to persist position)
+- `left` (double) [DEPRECATED] horizontal position is no longer used for layout; side is determined by docking (left/right)
 
 ### ToggleEntry
-Structure émise dans `onTogglesChanged`:
-- `index` (int): position de la ligne dans `children`.
-- `id` (Object?): identifiant optionnel fourni sur le `PanelButton`.
+Structure emitted in `onTogglesChanged`:
+- `index` (int): position of the row in `children`.
+- `id` (Object?): optional identifier provided on the `PanelButton`.
 
-## Exemple d’utilisation
+## Usage Example
 
 ```dart
 import 'package:flutter/material.dart';
@@ -97,21 +99,22 @@ class Demo extends StatelessWidget {
           collapseOpacity: 0.5,
           toggleMode: ToggleSelectionMode.multiple,
           onTogglesChanged: (entries) {
-            // entries: liste de ToggleEntry (index + id optionnel)
+            // entries: list of ToggleEntry (index + optional id)
             debugPrint(entries.toString());
           },
           children: [
-            // 1) Ligne avec options qui se déplient
+            // 1) Row with options that unfold
             PanelButton(
               id: PanelBtnId.menu,
               icon: const Icon(Icons.menu_open_rounded, color: Colors.white),
               backgroundColor: Colors.redAccent,
+              tooltip: 'Menu',
               options: const [
-                OptionButton(icon: Icon(Icons.checklist)),
-                OptionButton(icon: Icon(Icons.add)),
+                OptionButton(icon: Icon(Icons.checklist), tooltip: 'My checklist'),
+                OptionButton(icon: Icon(Icons.add), tooltip: 'Add'),
               ],
             ),
-            // 2) Ligne toggleable (pas d’options)
+            // 2) Toggleable row (no options)
             const PanelButton(
               id: PanelBtnId.add,
               toggleable: true,
@@ -127,19 +130,19 @@ class Demo extends StatelessWidget {
 }
 ```
 
-## Conseils d’intégration
-- Si vous souhaitez conserver la position entre des rebuilds fréquents, utilisez un `GlobalKey<DraggableButtonPanelState>` pour lire/écrire `top`/`left` depuis l’état courant.
-- La largeur visuelle du panneau est fixe (basée sur la largeur max des options) pour éviter les décalages quand une ligne s’étend; seule la ligne cliquée est animée.
-- Les angles arrondis s’ajustent automatiquement selon le côté d’ancrage.
+## Integration Tips
+- If you want to maintain the position between frequent rebuilds, use a `GlobalKey<DraggableButtonPanelState>` to read/write `top`/`left` from the current state.
+- The visual width of the panel is fixed (based on the max width of the options) to avoid shifts when a row expands; only the clicked row is animated.
+- The rounded corners adjust automatically according to the docking side.
 
-## Persister et restaurer la position
-Vous pouvez écouter la position via `onPositionChanged` et la réappliquer plus tard grâce aux méthodes publiques de l’état:
+## Persisting and Restoring Position
+You can listen to the position via `onPositionChanged` and reapply it later using the public methods of the state:
 
 ```dart
 class MyPageState extends State<MyPage> {
   final panelKey = GlobalKey<DraggableButtonPanelState>();
   Offset? savedOffset;
-  bool savedDockLeft = true; // par défaut à gauche
+  bool savedDockLeft = true; // default to left
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +151,7 @@ class MyPageState extends State<MyPage> {
         DraggableButtonPanel(
           key: panelKey,
           onPositionChanged: (offset) {
-            // Enregistrez (par ex. dans votre state, provider, prefs...)
+            // Save (e.g. in your state, provider, prefs...)
             savedOffset = offset;
             savedDockLeft = panelKey.currentState?.isDockedLeft ?? savedDockLeft;
           },
@@ -160,13 +163,13 @@ class MyPageState extends State<MyPage> {
             onPressed: () {
               final state = panelKey.currentState;
               if (state == null) return;
-              // Restaure la dernière position/docking connue
+              // Restore the last known position/docking
               state.setPanelPosition(
                 top: savedOffset?.dy,
                 dockLeft: savedDockLeft,
               );
             },
-            child: const Text('Restaurer position'),
+            child: const Text('Restore position'),
           ),
         ),
       ],
@@ -175,12 +178,12 @@ class MyPageState extends State<MyPage> {
 }
 ```
 
-API utile dans l’état:
-- `panelOffset` -> Offset(left, top) courant
-- `isDockedLeft` -> bool indiquant le côté
-- `setPanelPosition({double? top, bool? dockLeft, bool clampToScreen = true})` -> pour appliquer une position côté parent.
+Useful API in the state:
+- `panelOffset` -> Current Offset(left, top)
+- `isDockedLeft` -> bool indicating the side
+- `setPanelPosition({double? top, bool? dockLeft, bool clampToScreen = true})` -> to apply a position relative to the parent.
 
-## Licence
+## License
 BSD 3-Clause License
 
 Copyright (c) 2023–2025, KSɅRKΞV

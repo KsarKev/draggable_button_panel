@@ -55,6 +55,7 @@ class ToggleEntry {
 class OptionButton {
   final Icon icon;
   final String? label;
+  final String? tooltip;
   final VoidCallback? onPressed;
   final Color? color;
   final Color? backgroundColor;
@@ -67,6 +68,7 @@ class OptionButton {
     required this.icon,
     this.width = 50,
     this.label,
+    this.tooltip,
     this.onPressed,
     this.color,
     this.backgroundColor,
@@ -83,6 +85,7 @@ class OptionButton {
 class PanelButton {
   final Icon icon;
   final String? label;
+  final String? tooltip;
   final VoidCallback? onPressed;
   final Color? color;
   final Color? backgroundColor;
@@ -105,7 +108,8 @@ class PanelButton {
       color: Colors.white,
     ),
     this.label,
-    this.onPressed,
+    this.tooltip,
+    this.onPressed, 
     this.options = const [],
     this.color,
     this.backgroundColor,
@@ -199,15 +203,28 @@ class PanelButtonWidget extends StatelessWidget {
                 ),
                 child: Transform.scale(
                   scaleX: (isLeftPositioned || isExpanded) ? -1.0 : 1.0,
-                  child: IconButton(
-                    color: panelButton.color,
-                    icon: panelButton.icon,
-                    onPressed: () {
-                      if (panelButton.onPressed != null)
-                        panelButton.onPressed!();
-                      onExpand();
-                    },
-                  ),
+                  child: panelButton.tooltip != null
+                      ? Tooltip(
+                          message: panelButton.tooltip!,
+                          child: IconButton(
+                            color: panelButton.color,
+                            icon: panelButton.icon,
+                            onPressed: () {
+                              if (panelButton.onPressed != null)
+                                panelButton.onPressed!();
+                              onExpand();
+                            },
+                          ),
+                        )
+                      : IconButton(
+                          color: panelButton.color,
+                          icon: panelButton.icon,
+                          onPressed: () {
+                            if (panelButton.onPressed != null)
+                              panelButton.onPressed!();
+                            onExpand();
+                          },
+                        ),
                 ),
               ),
             )
@@ -217,14 +234,26 @@ class PanelButtonWidget extends StatelessWidget {
               ),
               child: Transform.scale(
                 scaleX: (isLeftPositioned || isExpanded) ? -1.0 : 1.0,
-                child: IconButton(
-                  color: panelButton.color,
-                  icon: panelButton.icon,
-                  onPressed: () {
-                    if (panelButton.onPressed != null) panelButton.onPressed!();
-                    onExpand();
-                  },
-                ),
+                child: panelButton.tooltip != null
+                    ? Tooltip(
+                        message: panelButton.tooltip!,
+                        child: IconButton(
+                          color: panelButton.color,
+                          icon: panelButton.icon,
+                          onPressed: () {
+                            if (panelButton.onPressed != null) panelButton.onPressed!();
+                            onExpand();
+                          },
+                        ),
+                      )
+                    : IconButton(
+                        color: panelButton.color,
+                        icon: panelButton.icon,
+                        onPressed: () {
+                          if (panelButton.onPressed != null) panelButton.onPressed!();
+                          onExpand();
+                        },
+                      ),
               ),
             ),
     );
@@ -251,7 +280,7 @@ class PanelButtonWidget extends StatelessWidget {
                   ? BorderRadius.only(topRight: radius, bottomRight: radius)
                   : BorderRadius.only(topLeft: radius, bottomLeft: radius);
             }
-            final optionChild = SizedBox(
+            final optionButton = SizedBox(
               width: opt.width ?? 50,
               height: height,
               child: IconButton(
@@ -260,6 +289,10 @@ class PanelButtonWidget extends StatelessWidget {
                 onPressed: opt.onPressed,
               ),
             );
+
+            final optionChild = opt.tooltip != null
+                ? Tooltip(message: opt.tooltip!, child: optionButton)
+                : optionButton;
 
             final decorated = DecoratedBox(
               decoration: BoxDecoration(
@@ -329,8 +362,9 @@ class DraggableButtonPanel extends StatefulWidget {
     this.buttonColor = Colors.blue,
     this.collapseOpacity = 0.5,
     this.toggleMode = ToggleSelectionMode.multiple,
-    this.onTogglesChanged,
+    this.onTogglesChanged, 
     this.onPositionChanged,
+    this.onMenuExpand,
   });
 
   /// List of main buttons (rows) displayed by this panel.
@@ -342,7 +376,7 @@ class DraggableButtonPanel extends StatefulWidget {
 
   /// Default color for main buttons when not individually specified.
   final Color buttonColor;
-
+ 
   /// Opacity applied to non-active, non-expanded rows. Active (toggled) or
   /// expanded rows are rendered at full opacity (1.0). Range: 0.0 - 1.0.
   final double collapseOpacity;
@@ -360,6 +394,10 @@ class DraggableButtonPanel extends StatefulWidget {
   /// programmatically via [DraggableButtonPanelState.setPanelPosition]. This is
   /// useful for persisting and restoring the panel position from the parent.
   final ValueChanged<Offset>? onPositionChanged;
+
+  /// Emits the row index and optional id when a row with options gets expanded.
+  /// Similar to [onTogglesChanged] but only for expansion of option menus.
+  final ValueChanged<ToggleEntry>? onMenuExpand;
 
   /// Initial top offset of the panel. The mutable source of truth is kept
   /// internally by the State; this value is only read once in initState.
@@ -634,6 +672,8 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
                       isLeftPositioned: _isDockedLeft,
                       baseButtonSize: widget.width,
                       onExpand: () {
+                        bool didExpand = false;
+                        Object? expandedId;
                         setState(() {
                           final child = widget.children[i];
                           if (child.toggleable) {
@@ -667,10 +707,15 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
                               _expandedIndex = null;
                             } else {
                               _expandedIndex = i;
+                              didExpand = true;
+                              expandedId = child.id;
                             }
                           }
                           // else: no options and not toggleable → no panel state change
                         });
+                        if (didExpand) {
+                          widget.onMenuExpand?.call(ToggleEntry(index: i, id: expandedId));
+                        }
                       },
                       isFirst: i == 0,
                       isLast: i == widget.children.length - 1,
