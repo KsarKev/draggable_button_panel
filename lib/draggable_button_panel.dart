@@ -33,6 +33,11 @@ import 'package:flutter/material.dart';
 /// - [multiple]: Multiple toggleable buttons can be active simultaneously.
 enum ToggleSelectionMode { single, multiple }
 
+/// Defines where dragging the panel is allowed to start from.
+/// - firstButton: Only the first PanelButton (main button area) starts a drag.
+/// - allButtons: Any PanelButton (main button area) starts a drag.
+enum DragHandleScope { firstButton, allButtons }
+
 /// Emitted item describing a toggleable row state.
 ///
 /// [index] is the position of the PanelButton in the panel.
@@ -125,6 +130,7 @@ class PanelButton {
 /// Internal widget used by the panel to render a single row (main button +
 /// its optional sliding options). Not intended for public consumption.
 class PanelButtonWidget extends StatelessWidget {
+  final Widget Function(Widget child)? mainButtonWrapper;
   final PanelButton panelButton;
   final bool isExpanded;
   final bool isLeftPositioned;
@@ -147,6 +153,7 @@ class PanelButtonWidget extends StatelessWidget {
     required this.inactiveOpacity,
     required this.isActive,
     this.separator,
+    this.mainButtonWrapper,
     Key? key,
   }) : super(key: key);
 
@@ -155,9 +162,6 @@ class PanelButtonWidget extends StatelessWidget {
     double total = 0;
     for (final opt in panelButton.options) {
       total += (opt.width ?? 50);
-    }
-    if (panelButton.options.length > 1) {
-      total += (panelButton.options.length - 1) * 8;
     }
     return total;
   }
@@ -257,6 +261,8 @@ class PanelButtonWidget extends StatelessWidget {
               ),
             ),
     );
+
+    mainButton = mainButtonWrapper?.call(mainButton) ?? mainButton;
 
     Widget optionsRow = AnimatedContainer(
       duration: const Duration(milliseconds: 250),
@@ -365,6 +371,7 @@ class DraggableButtonPanel extends StatefulWidget {
     this.onTogglesChanged, 
     this.onPositionChanged,
     this.onMenuExpand,
+    this.dragHandleScope = DragHandleScope.firstButton,
   });
 
   /// List of main buttons (rows) displayed by this panel.
@@ -398,6 +405,9 @@ class DraggableButtonPanel extends StatefulWidget {
   /// Emits the row index and optional id when a row with options gets expanded.
   /// Similar to [onTogglesChanged] but only for expansion of option menus.
   final ValueChanged<ToggleEntry>? onMenuExpand;
+
+  /// Where dragging may start from: only the first main button or all main buttons.
+  final DragHandleScope dragHandleScope;
 
   /// Initial top offset of the panel. The mutable source of truth is kept
   /// internally by the State; this value is only read once in initState.
@@ -531,13 +541,9 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
   }
 
   @override
-  Widget build(BuildContext context) => Draggable<int>(
-        // Allow free drag so user can cross the screen to change dock side.
-        onDragEnd: _onDragEnd,
-        dragAnchorStrategy: pointerDragAnchorStrategy,
-        feedback: _buildFeedback(),
-        child: _buildPanel(context),
-      );
+  Widget build(BuildContext context) {
+    return _buildPanel(context);
+  }
 
   void _onDragEnd(DraggableDetails draggableDetails) {
     final size = MediaQuery.of(context).size;
@@ -580,7 +586,8 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
   }
 
   Widget _buildFeedback() {
-    final double targetWidth = widget.width + _maxExpandedExtraWidth();
+    // Use current expanded width to avoid misalignment when docked right.
+    final double targetWidth = widget.width + _currentExpandedExtraWidth();
 
     return IgnorePointer(
       child: Material(
@@ -622,6 +629,16 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
     );
   }
 
+  Offset _feedbackOffset() {
+    // When docked on the right, align the right edge of the feedback with the
+    // right edge of the drag handle (main button) so it doesn't overflow off-screen.
+    if (_isDockedLeft) return Offset.zero;
+    final double feedbackWidth = widget.width + _currentExpandedExtraWidth();
+    final double handleWidth = widget.width; // main button width
+    final double dx = -(feedbackWidth - handleWidth);
+    return Offset(dx, 0);
+  }
+
   double _maxExpandedExtraWidth() {
     double maxExtra = 0;
     for (final child in widget.children) {
@@ -630,13 +647,22 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
       for (final opt in child.options) {
         total += (opt.width ?? 50);
       }
-      if (child.options.length > 1) {
-        total += (child.options.length - 1) * 8;
-      }
-      total += 8;
+      // Do not add implicit spacing; separator controls spacing and defaults to 0.
       if (total > maxExtra) maxExtra = total;
     }
     return maxExtra;
+  }
+
+  double _currentExpandedExtraWidth() {
+    final int? idx = _expandedIndex;
+    if (idx == null || idx < 0 || idx >= widget.children.length) return 0;
+    final child = widget.children[idx];
+    if (child.options.isEmpty) return 0;
+    double total = 0;
+    for (final opt in child.options) {
+      total += (opt.width ?? 50);
+    }
+    return total;
   }
 
   double _targetWidth() => widget.width + _maxExpandedExtraWidth();
@@ -671,6 +697,15 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
                       isExpanded: _expandedIndex == i,
                       isLeftPositioned: _isDockedLeft,
                       baseButtonSize: widget.width,
+                      mainButtonWrapper: ((widget.dragHandleScope == DragHandleScope.allButtons) || (widget.dragHandleScope == DragHandleScope.firstButton && i == 0))
+                          ? (child) => Draggable<int>(
+                                onDragEnd: _onDragEnd,
+                                dragAnchorStrategy: pointerDragAnchorStrategy,
+                                feedback: _buildFeedback(),
+                                feedbackOffset: _feedbackOffset(),
+                                child: child,
+                              )
+                          : null,
                       onExpand: () {
                         bool didExpand = false;
                         Object? expandedId;

@@ -236,6 +236,16 @@ class _DebugHomePageState extends State<DebugHomePage> {
                         });
                       }),
                   OptionButton(
+                      icon: Icon(Icons.comment, color: Colors.white),
+                      tooltip: 'Comment',
+                      backgroundColor: Colors.pinkAccent,
+                      width: 70,
+                      onPressed: () {
+                        setState(() {
+                          lastPressedMessage = 'Comment pressed';
+                        });
+                      }),
+                  OptionButton(
                       tooltip: 'Share',
                       icon: Icon(Icons.share, color: Colors.white),
                       backgroundColor: Colors.pinkAccent,
