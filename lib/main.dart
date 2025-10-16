@@ -41,6 +41,7 @@ class _DebugHomePageState extends State<DebugHomePage> {
   bool savedDockLeft = true;
   String? lastPressedMessage = 'No button pressed yet';
   String? toggledMessage = 'No toggles selected';
+  List<PanelBtnId> togglesIdsSelected = [];
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +175,8 @@ class _DebugHomePageState extends State<DebugHomePage> {
             onTogglesChanged: (entries) {
               // Print both indices and optional ids for easy debugging
               setState(() {
+                togglesIdsSelected =
+                    entries.map((e) => e.id).whereType<PanelBtnId>().toList();
                 toggledMessage = entries.isEmpty
                     ? 'No toggles selected'
                     : 'Toggled: ' +
@@ -245,26 +248,28 @@ class _DebugHomePageState extends State<DebugHomePage> {
                           lastPressedMessage = 'Comment pressed';
                         });
                       }),
-                  OptionButton(
-                      tooltip: 'Share',
-                      icon: Icon(Icons.share, color: Colors.white),
-                      backgroundColor: Colors.pinkAccent,
-                      width: 50,
-                      onPressed: () {
-                        setState(() {
-                          lastPressedMessage = 'Share pressed';
-                        });
-                      }),
-                  OptionButton(
-                      tooltip: 'Delete',
-                      icon: Icon(Icons.delete_outline, color: Colors.white),
-                      backgroundColor: Colors.pinkAccent,
-                      width: 50,
-                      onPressed: () {
-                        setState(() {
-                          lastPressedMessage = 'Delete pressed';
-                        });
-                      }),
+                  if(togglesIdsSelected.contains(PanelBtnId.favorite))...{
+                    OptionButton(
+                        tooltip: 'Share',
+                        icon: Icon(Icons.share, color: Colors.white),
+                        backgroundColor: Colors.pinkAccent,
+                        width: 50,
+                        onPressed: () {
+                          setState(() {
+                            lastPressedMessage = 'Share pressed';
+                          });
+                        }),
+                    OptionButton(
+                        tooltip: 'Delete',
+                        icon: Icon(Icons.delete_outline, color: Colors.white),
+                        backgroundColor: Colors.pinkAccent,
+                        width: 50,
+                        onPressed: () {
+                          setState(() {
+                            lastPressedMessage = 'Delete pressed';
+                          });
+                        }),
+                  }
                 ],
               ),
 

@@ -601,17 +601,7 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
       ),
     );
   }
-
-  Offset _feedbackOffset() {
-    // When docked on the right, align the right edge of the feedback with the
-    // right edge of the drag handle (main button) so it doesn't overflow off-screen.
-    if (_isDockedLeft) return Offset.zero;
-    final double feedbackWidth = widget.width + _currentExpandedExtraWidth();
-    final double handleWidth = widget.width; // main button width
-    final double dx = -(feedbackWidth - handleWidth);
-    return Offset(dx, 0);
-  }
-
+  
   double _maxExpandedExtraWidth() {
     double maxExtra = 0;
     for (final child in widget.children) {
@@ -620,7 +610,6 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
       for (final opt in child.options) {
         total += (opt.width ?? 50);
       }
-      // Do not add implicit spacing; separator controls spacing and defaults to 0.
       if (total > maxExtra) maxExtra = total;
     }
     return maxExtra;
@@ -646,10 +635,11 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
     return Stack(children: [
       Positioned(
         top: _top,
-        left: _isDockedLeft
-            ? 0
-            : (MediaQuery.of(context).size.width - targetWidth),
-        child: Container(
+        left: _isDockedLeft ? 0 : null,
+        right: _isDockedLeft ? null : 0,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
           width: targetWidth,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
@@ -673,9 +663,7 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
                       mainButtonWrapper: ((widget.dragHandleScope == DragHandleScope.allButtons) || (widget.dragHandleScope == DragHandleScope.firstButton && i == 0))
                           ? (child) => Draggable<int>(
                                 onDragEnd: _onDragEnd,
-                                dragAnchorStrategy: pointerDragAnchorStrategy,
                                 feedback: _buildFeedback(),
-                                feedbackOffset: _feedbackOffset(),
                                 child: child,
                               )
                           : null,
