@@ -157,8 +157,13 @@ class PanelButtonWidget extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
-  double _optionsWidth() {
-    if (panelButton.options.isEmpty) return 0;
+  // Helpers
+  static const _kOptionsAnim = Duration(milliseconds: 250);
+  static const _kOpacityAnim = Duration(milliseconds: 300);
+
+  Radius get _corner => const Radius.circular(8);
+
+  double _sumOptionsWidth() {
     double total = 0;
     for (final opt in panelButton.options) {
       total += (opt.width ?? 50);
@@ -166,111 +171,121 @@ class PanelButtonWidget extends StatelessWidget {
     return total;
   }
 
+  BorderRadius? _mainButtonBorderRadius() {
+    if (isExpanded) return null; // while expanded, options side owns the rounding
+    final r = _corner;
+    if (isLeftPositioned) {
+      if (isFirst && !isLast) return BorderRadius.only(topRight: r);
+      if (isLast && !isFirst) return BorderRadius.only(bottomRight: r);
+      if (isFirst && isLast) return BorderRadius.only(topRight: r, bottomRight: r);
+    } else {
+      if (isFirst && !isLast) return BorderRadius.only(topLeft: r);
+      if (isLast && !isFirst) return BorderRadius.only(bottomLeft: r);
+      if (isFirst && isLast) return BorderRadius.only(topLeft: r, bottomLeft: r);
+    }
+    return null;
+  }
+
+  Widget _withTooltip({required String? tooltip, required Widget child}) {
+    if (tooltip == null) return child;
+    return Tooltip(message: tooltip, child: child);
+  }
+
+  Widget _iconButton({
+    required Icon icon,
+    required Color? color,
+    required VoidCallback? onPressed,
+    required VoidCallback onAfterPress,
+  }) {
+    return IconButton(
+      color: color,
+      icon: icon,
+      onPressed: () {
+        if (onPressed != null) onPressed();
+        onAfterPress();
+      },
+    );
+  }
+
+  Widget _buildMainButton(double width, double height) {
+    final button = _withTooltip(
+      tooltip: panelButton.tooltip,
+      child: _iconButton(
+        icon: panelButton.icon,
+        color: panelButton.color,
+        onPressed: panelButton.onPressed,
+        onAfterPress: onExpand,
+      ),
+    );
+
+    final content = Transform.scale(
+      scaleX: (isLeftPositioned || isExpanded) ? -1.0 : 1.0,
+      child: button,
+    );
+
+    final decorated = DecoratedBox(
+      decoration: BoxDecoration(
+        color: panelButton.backgroundColor ?? Colors.white,
+        borderRadius: _mainButtonBorderRadius(),
+      ),
+      child: content,
+    );
+
+    final clippedBorder = _mainButtonBorderRadius();
+    final child = clippedBorder != null
+        ? ClipRRect(borderRadius: clippedBorder, child: decorated)
+        : decorated;
+
+    return SizedBox(width: width, height: height, child: child);
+  }
+
+  Widget _buildOptionTile(OptionButton opt, bool isLast, double height) {
+    final r = _corner;
+    BorderRadius? br;
+    if (isExpanded && isLast) {
+      br = isLeftPositioned
+          ? BorderRadius.only(topRight: r, bottomRight: r)
+          : BorderRadius.only(topLeft: r, bottomLeft: r);
+    }
+
+    final tile = SizedBox(
+      width: opt.width ?? 50,
+      height: height,
+      child: IconButton(
+        icon: opt.icon,
+        color: opt.color,
+        onPressed: opt.onPressed,
+      ),
+    );
+
+    final child = _withTooltip(tooltip: opt.tooltip, child: tile);
+
+    final decorated = DecoratedBox(
+      decoration: BoxDecoration(
+        color: opt.backgroundColor ?? Colors.white,
+        borderRadius: br,
+      ),
+      child: child,
+    );
+
+    return br != null ? ClipRRect(borderRadius: br, child: decorated) : decorated;
+  }
+
   @override
   Widget build(BuildContext context) {
     final double height = panelButton.height ?? baseButtonSize;
     final double buttonSide = panelButton.width ?? baseButtonSize;
-    final double optionsWidth = _optionsWidth();
+    final double optionsWidth = _sumOptionsWidth();
 
-    final Radius radius = const Radius.circular(8);
-    BorderRadius? borderRadiusMainButton;
-    if (!isExpanded) {
-      if (isLeftPositioned) {
-        if (isFirst && !isLast) {
-          borderRadiusMainButton = BorderRadius.only(topRight: radius);
-        } else if (isLast && !isFirst) {
-          borderRadiusMainButton = BorderRadius.only(bottomRight: radius);
-        } else if (isFirst && isLast) {
-          borderRadiusMainButton =
-              BorderRadius.only(topRight: radius, bottomRight: radius);
-        }
-      } else {
-        if (isFirst && !isLast) {
-          borderRadiusMainButton = BorderRadius.only(topLeft: radius);
-        } else if (isLast && !isFirst) {
-          borderRadiusMainButton = BorderRadius.only(bottomLeft: radius);
-        } else if (isFirst && isLast) {
-          borderRadiusMainButton =
-              BorderRadius.only(topLeft: radius, bottomLeft: radius);
-        }
-      }
-    }
-    Widget mainButton = SizedBox(
-      width: buttonSide,
-      height: height,
-      child: borderRadiusMainButton != null
-          ? ClipRRect(
-              borderRadius: borderRadiusMainButton,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: panelButton.backgroundColor ?? Colors.white,
-                ),
-                child: Transform.scale(
-                  scaleX: (isLeftPositioned || isExpanded) ? -1.0 : 1.0,
-                  child: panelButton.tooltip != null
-                      ? Tooltip(
-                          message: panelButton.tooltip!,
-                          child: IconButton(
-                            color: panelButton.color,
-                            icon: panelButton.icon,
-                            onPressed: () {
-                              if (panelButton.onPressed != null)
-                                panelButton.onPressed!();
-                              onExpand();
-                            },
-                          ),
-                        )
-                      : IconButton(
-                          color: panelButton.color,
-                          icon: panelButton.icon,
-                          onPressed: () {
-                            if (panelButton.onPressed != null)
-                              panelButton.onPressed!();
-                            onExpand();
-                          },
-                        ),
-                ),
-              ),
-            )
-          : DecoratedBox(
-              decoration: BoxDecoration(
-                color: panelButton.backgroundColor ?? Colors.white,
-              ),
-              child: Transform.scale(
-                scaleX: (isLeftPositioned || isExpanded) ? -1.0 : 1.0,
-                child: panelButton.tooltip != null
-                    ? Tooltip(
-                        message: panelButton.tooltip!,
-                        child: IconButton(
-                          color: panelButton.color,
-                          icon: panelButton.icon,
-                          onPressed: () {
-                            if (panelButton.onPressed != null) panelButton.onPressed!();
-                            onExpand();
-                          },
-                        ),
-                      )
-                    : IconButton(
-                        color: panelButton.color,
-                        icon: panelButton.icon,
-                        onPressed: () {
-                          if (panelButton.onPressed != null) panelButton.onPressed!();
-                          onExpand();
-                        },
-                      ),
-              ),
-            ),
-    );
-
+    Widget mainButton = _buildMainButton(buttonSide, height);
     mainButton = mainButtonWrapper?.call(mainButton) ?? mainButton;
 
-    Widget optionsRow = AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+    final optionsRow = AnimatedContainer(
+      duration: _kOptionsAnim,
       curve: Curves.easeInOut,
       width: isExpanded ? optionsWidth : 0,
       height: height,
-      alignment:
-          isLeftPositioned ? Alignment.centerLeft : Alignment.centerRight,
+      alignment: isLeftPositioned ? Alignment.centerLeft : Alignment.centerRight,
       child: Opacity(
         opacity: isExpanded ? 1 : 0,
         child: ListView.separated(
@@ -279,38 +294,8 @@ class PanelButtonWidget extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
             final opt = panelButton.options[index];
-            final bool isLast = index == panelButton.options.length - 1;
-            BorderRadius? borderRadiusOptionButton;
-            if (isExpanded && isLast) {
-              borderRadiusOptionButton = isLeftPositioned
-                  ? BorderRadius.only(topRight: radius, bottomRight: radius)
-                  : BorderRadius.only(topLeft: radius, bottomLeft: radius);
-            }
-            final optionButton = SizedBox(
-              width: opt.width ?? 50,
-              height: height,
-              child: IconButton(
-                icon: opt.icon,
-                color: opt.color,
-                onPressed: opt.onPressed,
-              ),
-            );
-
-            final optionChild = opt.tooltip != null
-                ? Tooltip(message: opt.tooltip!, child: optionButton)
-                : optionButton;
-
-            final decorated = DecoratedBox(
-              decoration: BoxDecoration(
-                color: opt.backgroundColor ?? Colors.white,
-                borderRadius: borderRadiusOptionButton,
-              ),
-              child: optionChild,
-            );
-            return borderRadiusOptionButton != null
-                ? ClipRRect(
-                    borderRadius: borderRadiusOptionButton, child: decorated)
-                : decorated;
+            final bool last = index == panelButton.options.length - 1;
+            return _buildOptionTile(opt, last, height);
           },
           separatorBuilder: (_, __) => separator ?? const SizedBox(width: 0),
           itemCount: panelButton.options.length,
@@ -318,29 +303,17 @@ class PanelButtonWidget extends StatelessWidget {
       ),
     );
 
-    List<Widget> rowChildren;
-    if (isLeftPositioned) {
-      rowChildren = [
-        mainButton,
-        optionsRow,
-      ];
-    } else {
-      rowChildren = [
-        optionsRow,
-        mainButton,
-      ];
-    }
+    final rowChildren = isLeftPositioned
+        ? <Widget>[mainButton, optionsRow]
+        : <Widget>[optionsRow, mainButton];
 
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: _kOpacityAnim,
       curve: Curves.easeInOut,
       opacity: (isExpanded || isActive) ? 1.0 : inactiveOpacity,
       child: SizedBox(
         height: height,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: rowChildren,
-        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: rowChildren),
       ),
     );
   }
