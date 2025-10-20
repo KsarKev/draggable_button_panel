@@ -67,7 +67,7 @@ Main properties:
 - `collapseOpacity` (double) opacity of inactive rows (0–1)
 - `toggleMode` (ToggleSelectionMode)
 - `onTogglesChanged` (ValueChanged<List<ToggleEntry>>?) emits active states
-- `onPositionChanged` (ValueChanged<Offset>?) notifies position (left, top) after drag or programmatic change
+- `onPositionChanged` (ValueChanged<PanelPosition>?) notifies the position (dock side + top) after drag or programmatic change
 - `onMenuExpand` (ValueChanged<ToggleEntry>?) called when a row with options expands (emits index + optional id)
 - `top` (double) vertical position of the panel (mutable to persist position)
 - `left` (double) [DEPRECATED] horizontal position is no longer used for layout; side is determined by docking (left/right)
@@ -76,6 +76,11 @@ Main properties:
 Structure emitted in `onTogglesChanged`:
 - `index` (int): position of the row in `children`.
 - `id` (Object?): optional identifier provided on the `PanelButton`.
+
+### PanelPosition
+Value object used to read or set the panel position in one go:
+- `isDockedLeft` (bool): whether the panel is docked to the left.
+- `top` (double): vertical offset from the top.
 
 ## Usage Example
 
@@ -131,7 +136,7 @@ class Demo extends StatelessWidget {
 ```
 
 ## Integration Tips
-- If you want to maintain the position between frequent rebuilds, use a `GlobalKey<DraggableButtonPanelState>` to read/write `top`/`left` from the current state.
+- If you want to maintain the position between frequent rebuilds, use a `GlobalKey<DraggableButtonPanelState>` to read/write the `panelPosition` from the current state (or call `setPanelPosition`).
 - The visual width of the panel is fixed (based on the max width of the options) to avoid shifts when a row expands; only the clicked row is animated.
 - The rounded corners adjust automatically according to the docking side.
 
@@ -141,8 +146,7 @@ You can listen to the position via `onPositionChanged` and reapply it later usin
 ```dart
 class MyPageState extends State<MyPage> {
   final panelKey = GlobalKey<DraggableButtonPanelState>();
-  Offset? savedOffset;
-  bool savedDockLeft = true; // default to left
+  PanelPosition? savedPosition;
 
   @override
   Widget build(BuildContext context) {
@@ -150,10 +154,9 @@ class MyPageState extends State<MyPage> {
       children: [
         DraggableButtonPanel(
           key: panelKey,
-          onPositionChanged: (offset) {
+          onPositionChanged: (pos) {
             // Save (e.g. in your state, provider, prefs...)
-            savedOffset = offset;
-            savedDockLeft = panelKey.currentState?.isDockedLeft ?? savedDockLeft;
+            savedPosition = pos;
           },
           children: const [ /* ... */ ],
         ),
@@ -164,10 +167,9 @@ class MyPageState extends State<MyPage> {
               final state = panelKey.currentState;
               if (state == null) return;
               // Restore the last known position/docking
-              state.setPanelPosition(
-                top: savedOffset?.dy,
-                dockLeft: savedDockLeft,
-              );
+              if (savedPosition != null) {
+                state.panelPosition = savedPosition!;
+              }
             },
             child: const Text('Restore position'),
           ),
@@ -181,7 +183,8 @@ class MyPageState extends State<MyPage> {
 Useful API in the state:
 - `panelOffset` -> Current Offset(left, top)
 - `isDockedLeft` -> bool indicating the side
-- `setPanelPosition({double? top, bool? dockLeft, bool clampToScreen = true})` -> to apply a position relative to the parent.
+- `panelPosition` -> get/set the current PanelPosition (top + docking side)
+- `setPanelPosition({double? top, bool? dockLeft, bool clampToScreen = true})` -> programmatic positioning (legacy-compatible).
 
 ## License
 BSD 3-Clause License

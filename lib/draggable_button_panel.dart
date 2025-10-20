@@ -80,6 +80,16 @@ class OptionButton {
   }) : assert(width == null || width > 0, 'width must be > 0');
 }
 
+class PanelPosition {
+  final bool isDockedLeft;
+  final double top;
+
+  const PanelPosition({
+    required this.isDockedLeft,
+    required this.top,
+  });
+}
+
 /// Represents a main button (row) inside [DraggableButtonPanel].
 ///
 /// A [PanelButton] can either:
@@ -369,11 +379,11 @@ class DraggableButtonPanel extends StatefulWidget {
   /// Only relevant for rows with [PanelButton.toggleable] == true.
   final ValueChanged<List<ToggleEntry>>? onTogglesChanged;
 
-  /// Emits the current panel offset as an [Offset] (dx = left, dy = top)
+  /// Emits the current panel position as a [PanelPosition]
   /// whenever the panel position changes due to dragging or when changed
   /// programmatically via [DraggableButtonPanelState.setPanelPosition]. This is
   /// useful for persisting and restoring the panel position from the parent.
-  final ValueChanged<Offset>? onPositionChanged;
+  final ValueChanged<PanelPosition>? onPositionChanged;
 
   /// Emits the row index and optional id when a row with options gets expanded.
   /// Similar to [onTogglesChanged] but only for expansion of option menus.
@@ -441,6 +451,23 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
   /// Whether the panel is currently docked to the left side.
   bool get isDockedLeft => _isDockedLeft;
 
+  /// Current top offset of the panel.
+  double get top => _top;
+  
+  /// Current panel position details.
+  PanelPosition get panelPosition => PanelPosition(
+    isDockedLeft: _isDockedLeft,
+    top: _top,
+  );
+
+  /// Sets the panel position using a PanelPosition value object.
+  set panelPosition(PanelPosition value) {
+    setPanelPosition(
+      top: value.top,
+      dockLeft: value.isDockedLeft,
+    );
+  }
+
   /// Programmatically set the panel position and/or dock side.
   ///
   /// - Provide [top] to move the panel.
@@ -477,7 +504,7 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
     final size = MediaQuery.of(context).size;
     final double targetWidth = widget.width + _maxExpandedExtraWidth();
     final double computedLeft = _isDockedLeft ? 0 : (size.width - targetWidth);
-    widget.onPositionChanged?.call(Offset(computedLeft, _top));
+    widget.onPositionChanged?.call(PanelPosition(isDockedLeft: _isDockedLeft, top: _top));
   }
 
   @override
@@ -555,7 +582,7 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
     // Notify external listeners of the final position (left, top)
     final double targetWidth = widget.width + _maxExpandedExtraWidth();
     final double computedLeft = _isDockedLeft ? 0 : (size.width - targetWidth);
-    widget.onPositionChanged?.call(Offset(computedLeft, _top));
+    widget.onPositionChanged?.call(PanelPosition(isDockedLeft: _isDockedLeft, top: _top));
   }
 
   Widget _buildFeedback() {

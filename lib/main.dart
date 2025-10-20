@@ -37,7 +37,7 @@ class DebugHomePage extends StatefulWidget {
 class _DebugHomePageState extends State<DebugHomePage> {
   // Optionally keep a key to read/adjust top/left from the state during tests
   final panelKey = GlobalKey<DraggableButtonPanelState>();
-  Offset? savedOffset;
+   PanelPosition? panelPosition;
   bool savedDockLeft = true;
   String? lastPressedMessage = 'No button pressed yet';
   String? toggledMessage = 'No toggles selected';
@@ -135,9 +135,9 @@ class _DebugHomePageState extends State<DebugHomePage> {
                         final state = panelKey.currentState;
                         if (state == null) return;
                         setState(() {
-                          state.setPanelPosition(
+                          state.panelPosition = const PanelPosition(
+                            isDockedLeft: false,
                             top: 50,
-                            dockLeft: false,
                           );
                         });
                       },
@@ -185,9 +185,9 @@ class _DebugHomePageState extends State<DebugHomePage> {
                             .join(', ');
               });
             },
-            onPositionChanged: (offset) {
+            onPositionChanged: (position) {
               // Optionally save the last position for testing
-              savedOffset = offset;
+              panelPosition = position;
               savedDockLeft =
                   panelKey.currentState?.isDockedLeft ?? savedDockLeft;
             },
