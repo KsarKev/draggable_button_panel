@@ -37,11 +37,8 @@ class DebugHomePage extends StatefulWidget {
 class _DebugHomePageState extends State<DebugHomePage> {
   // Optionally keep a key to read/adjust top/left from the state during tests
   final panelKey = GlobalKey<DraggableButtonPanelState>();
-   PanelPosition? panelPosition;
-  bool savedDockLeft = true;
   String? lastPressedMessage = 'No button pressed yet';
   String? toggledMessage = 'No toggles selected';
-  List<PanelBtnId> togglesIdsSelected = [];
 
   @override
   Widget build(BuildContext context) {
@@ -175,8 +172,6 @@ class _DebugHomePageState extends State<DebugHomePage> {
             onTogglesChanged: (entries) {
               // Print both indices and optional ids for easy debugging
               setState(() {
-                togglesIdsSelected =
-                    entries.map((e) => e.id).whereType<PanelBtnId>().toList();
                 toggledMessage = entries.isEmpty
                     ? 'No toggles selected'
                     : 'Toggled: ' +
@@ -185,12 +180,7 @@ class _DebugHomePageState extends State<DebugHomePage> {
                             .join(', ');
               });
             },
-            onPositionChanged: (position) {
-              // Optionally save the last position for testing
-              panelPosition = position;
-              savedDockLeft =
-                  panelKey.currentState?.isDockedLeft ?? savedDockLeft;
-            },
+            onPositionChanged: (_) {},
             children: [
               // Row 0: expandable with two options
               PanelButton(

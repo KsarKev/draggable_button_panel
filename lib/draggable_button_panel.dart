@@ -501,8 +501,6 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
       }
       // left is intentionally ignored; docking defines x-position.
     });
-    final size = MediaQuery.of(context).size;
-    final double targetWidth = widget.width + _maxExpandedExtraWidth();
     widget.onPositionChanged?.call(PanelPosition(isDockedLeft: _isDockedLeft, top: _top));
   }
 
