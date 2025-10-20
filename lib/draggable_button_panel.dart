@@ -503,7 +503,6 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
     });
     final size = MediaQuery.of(context).size;
     final double targetWidth = widget.width + _maxExpandedExtraWidth();
-    final double computedLeft = _isDockedLeft ? 0 : (size.width - targetWidth);
     widget.onPositionChanged?.call(PanelPosition(isDockedLeft: _isDockedLeft, top: _top));
   }
 
@@ -581,7 +580,6 @@ class DraggableButtonPanelState extends State<DraggableButtonPanel>
 
     // Notify external listeners of the final position (left, top)
     final double targetWidth = widget.width + _maxExpandedExtraWidth();
-    final double computedLeft = _isDockedLeft ? 0 : (size.width - targetWidth);
     widget.onPositionChanged?.call(PanelPosition(isDockedLeft: _isDockedLeft, top: _top));
   }
 
